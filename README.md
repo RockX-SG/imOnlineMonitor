@@ -1,4 +1,9 @@
-# Kusama imOnline Monitoring tool
+# Polkadot/Kusama/Substrate imOnline Monitoring tool
+Forked from https://github.com/ddorgan/imOnlineMonitor and added extra metrics and logics for better monitoring
+
+## Added new features
+** Era rewards points
+** Current Era index
 
 **Experimental**, so no guarantee this actually works :)
 <br/>

@@ -82,6 +82,8 @@ async function main () {
   let lastWarn = 0;
   //Last index we alerted on
   let lastIndex = 0;
+  // Last era index 
+  let lastEraIndex = 0;
   //subscribing to new heads of the chain
   const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
     console.log(`Chain is at block: #${header.number} hash: #${header.hash}`);
@@ -98,6 +100,32 @@ async function main () {
     let authIndices = await getIndices(api,vals,validators);
     for (const [_, authIndex] of authIndices.entries()) {
         console.log(`Checking AuthIndex #${authIndex}, Session #${session}, Progress ${Math.round(progress * 100)}%`);
+
+        let activeEra = await api.query.staking.activeEra();
+        activeEra = JSON.parse(JSON.stringify(activeEra));
+        const currentEraIndex = activeEra.index;
+  
+        console.log(`activeEva is ${currentEraIndex}`);
+  
+        let [currentEraPointsEarned] = await Promise.all([
+          api.query.staking.erasRewardPoints(currentEraIndex)
+        ]);
+        const rewardPoints = currentEraPointsEarned.get('individual').toJSON();
+        const r = rewardPoints[vals];
+        console.log(`current rewards point is ${r}`);
+  
+        if (r) {
+          prom.reward_point.set({ validator: validators[authIndex].toString(), chain: chain, name: nodeName, version: nodeVersion }, r);
+        } else {
+  
+          prom.reward_point.set({ validator: validators[authIndex].toString(), chain: chain, name: nodeName, version: nodeVersion }, 0);
+        }
+  
+        if (currentEraIndex > lastEraIndex) {
+          lastEraIndex = currentEraIndex
+          prom.current_index.set({ validator: validators[authIndex].toString(), chain: chain, name: nodeName, version: nodeVersion }, lastEraIndex);
+        }
+        
         let heartbeat = await getHeartbeat(api, session, authIndex)
         //Heartbeat is "0x00" if no heartbeat message was received yet
         if(heartbeat.toString() == "0x00") {

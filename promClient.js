@@ -19,8 +19,22 @@ const imOnline_failure = new promClient.Gauge({
   labelNames: ['validator', 'chain', 'name', 'version'],
 });
 
+const reward_point = new promClient.Gauge({
+  name: 'polkadot_reward_point',
+  help: 'Check current reward point',
+  labelNames: ['validator', 'chain', 'name', 'version'],
+});
+
+const current_index = new promClient.Gauge({
+  name: 'polkadot_current_index',
+  help: 'Check current era index',
+  labelNames: ['validator', 'chain', 'name', 'version'],
+});
+
 module.exports = {
   startCollection,
   injectMetricsRoute,
   imOnline_failure,
+  reward_point,
+  current_index,
 };
