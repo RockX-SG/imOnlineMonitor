@@ -61,6 +61,14 @@ async function main () {
   const api = await ApiPromise.create({
     provider: provider
     });
+  
+    api.on('error', () => {
+      console.log('===========Error happened');
+    });
+    api.on('disconnected', () => {
+      console.log('===========WS api disconnected, try to restart');
+      process.exit();
+    });
 
     prom.injectMetricsRoute(app);
     prom.startCollection();
