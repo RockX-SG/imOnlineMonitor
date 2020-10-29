@@ -132,7 +132,25 @@ async function main () {
         if (currentEraIndex > lastEraIndex) {
           lastEraIndex = currentEraIndex
           prom.current_index.set({ validator: validators[authIndex].toString(), chain: chain, name: nodeName, version: nodeVersion }, lastEraIndex);
+       
+          //last era rewards
+          let last_rewards = await get_rewards(api, vals, currentEraIndex-1,currentEraIndex);
+          console.log(`last Era rewards is ${last_rewards}`);
+          prom.last_era_rewards.set({ chain: chain, name: nodeName, version: nodeVersion }, last_rewards);
+
+          //24hours rewards for kusama
+          if (chain == 'Kusama'){
+            let daily_rewards = await get_rewards(api, vals, currentEraIndex-4,currentEraIndex);
+            console.log(`24 hours rewards is ${daily_rewards}`);
+            prom.daily_rewards.set({ chain: chain, name: nodeName, version: nodeVersion }, daily_rewards);
+          }
+          //21 day(84 era) rewards
+          let all_rewards = await get_rewards(api, vals, currentEraIndex-84,currentEraIndex);
+          console.log(`84 Eras rewards is ${all_rewards}`);
+          prom.all_rewards.set({ chain: chain, name: nodeName, version: nodeVersion }, all_rewards);
+
         }
+        
         
         let heartbeat = await getHeartbeat(api, session, authIndex)
         //Heartbeat is "0x00" if no heartbeat message was received yet
@@ -206,6 +224,42 @@ async function sendAlert(val, session, heartbeat) {
   if (sentry != undefined) {
     Sentry.captureMessage(val.toString() +  "is reported offline");
   }
+}
+
+// rewards
+async function get_rewards (api, vals, beginIndex, endIndex) {
+  let t=0;
+  for (var i=beginIndex;i<endIndex;i++ ){
+    const rewards = await api.query.staking.erasValidatorReward(i);
+    const total_rewards = rewards.toJSON();
+    if (total_rewards === null){
+      continue;
+    }
+    //console.log(total_rewards);
+
+    let [currentEraPointsEarned] = await Promise.all([
+          api.query.staking.erasRewardPoints(i)
+        ]);
+    const total_points = currentEraPointsEarned.get('total').toJSON();
+    if (total_points === 0){
+      continue;
+    }
+    //console.log(total_points);
+
+    const rewardPoints = currentEraPointsEarned.get('individual').toJSON();
+    const r = rewardPoints[vals];
+    if (r === undefined){
+      continue;
+    }
+    //console.log(r);
+
+    //const val_rewards = (total_rewards/total_points*r)*10**-12
+    const val_rewards = total_rewards/total_points*r
+    console.log(`valadator rewards in era ${i} is ${val_rewards}`)
+    t=t+val_rewards;
+    console.log(`total rewards to era ${i} is ${t}`)
+  }
+  return t;
 }
 
 main()

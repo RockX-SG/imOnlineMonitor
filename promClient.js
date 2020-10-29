@@ -31,10 +31,31 @@ const current_index = new promClient.Gauge({
   labelNames: ['validator', 'chain', 'name', 'version'],
 });
 
+const last_era_rewards = new promClient.Gauge({
+  name: 'polkadot_last_era_rewards',
+  help: 'Check last era rewards',
+  labelNames: ['validator', 'chain', 'name', 'version'],
+});
+
+const daily_rewards = new promClient.Gauge({
+  name: 'polkadot_daily_rewards',
+  help: 'Check daily rewards',
+  labelNames: ['validator', 'chain', 'name', 'version'],
+});
+
+const all_rewards = new promClient.Gauge({
+  name: 'polkadot_all_rewards',
+  help: 'Check 84 era rewards',
+  labelNames: ['validator', 'chain', 'name', 'version'],
+});
+
 module.exports = {
   startCollection,
   injectMetricsRoute,
   imOnline_failure,
   reward_point,
   current_index,
+  last_era_rewards,
+  daily_rewards,
+  all_rewards,
 };
